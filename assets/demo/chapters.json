@@ -1,0 +1,86 @@
+[
+  {
+    "id": "captacao",
+    "label": "Captação",
+    "title": "A conversa começa antes do atendimento.",
+    "body": "Crie páginas e formulários para transformar visitas em contatos dentro da operação.",
+    "detail": "O construtor reúne elementos e edição da página no mesmo ambiente.",
+    "focus": [
+      0.66,
+      0.56
+    ],
+    "zoom": 1.55
+  },
+  {
+    "id": "conversas",
+    "label": "Conversas + IA",
+    "title": "Atenda com o contexto ao lado.",
+    "body": "Conversas, qualificação com IA e informações do contato reunidas na mesma tela.",
+    "detail": "A conversa com IA fica ao lado do contato, da oportunidade e do próximo passo.",
+    "focus": [
+      0.67,
+      0.57
+    ],
+    "zoom": 1.65
+  },
+  {
+    "id": "crm",
+    "label": "CRM",
+    "title": "Cada oportunidade tem um próximo passo.",
+    "body": "Acompanhe as etapas da venda e consulte os detalhes sem perder a visão do funil.",
+    "detail": "O painel da oportunidade reúne valor, responsável, próxima ação, tarefas e notas.",
+    "focus": [
+      0.83,
+      0.55
+    ],
+    "zoom": 1.75
+  },
+  {
+    "id": "automacoes",
+    "label": "Automações",
+    "title": "Defina o processo. Deixe a rotina seguir.",
+    "body": "Conecte gatilhos, qualificação, tarefas e ações em um fluxo visual.",
+    "detail": "O fluxo separa os caminhos de leads qualificados e não qualificados e executa as ações definidas.",
+    "focus": [
+      0.57,
+      0.59
+    ],
+    "zoom": 1.55
+  },
+  {
+    "id": "email",
+    "label": "E-mail",
+    "title": "Continue o relacionamento.",
+    "body": "Monte campanhas de e-mail com um editor visual e prepare sua comunicação.",
+    "detail": "Edite conteúdo, assunto e pré-cabeçalho antes de definir destinatários e revisar o envio.",
+    "focus": [
+      0.65,
+      0.56
+    ],
+    "zoom": 1.5
+  },
+  {
+    "id": "social",
+    "label": "Redes sociais",
+    "title": "Planeje a presença da sua marca.",
+    "body": "Organize publicações, canais, datas e status em uma visão de planejamento.",
+    "detail": "Veja quais posts estão publicados, agendados, em revisão ou em rascunho.",
+    "focus": [
+      0.59,
+      0.62
+    ],
+    "zoom": 1.5
+  },
+  {
+    "id": "gestao",
+    "label": "Gestão",
+    "title": "Enxergue a operação por inteiro.",
+    "body": "Reúna leads, oportunidades, atendimentos e resultados em dashboards de gestão.",
+    "detail": "Indicadores, canais e etapas ajudam a acompanhar o comercial com uma visão compartilhada.",
+    "focus": [
+      0.56,
+      0.47
+    ],
+    "zoom": 1.45
+  }
+]

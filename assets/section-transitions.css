@@ -1,0 +1,11 @@
+/* A short charcoal bridge links the operational problem to the ecosystem.
+   Light/dark chapter changes and reading surfaces retain their contrast. */
+#produto .hub-sticky::after{
+ content:"";
+ position:absolute;
+ inset:0 0 auto;
+ height:clamp(96px,18svh,160px);
+ z-index:1;
+ pointer-events:none;
+ background:linear-gradient(180deg,#292a27 0%,#232420 24%,#191a17 62%,#121310 100%)!important;
+}
