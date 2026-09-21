@@ -335,7 +335,7 @@ const definitions=[
 ];
 const pieces=definitions.map(p=>{const path=new Path2D();p.points.forEach(([x,y],i)=>i?path.lineTo(x,y):path.moveTo(x,y));path.closePath();return {...p,path,x:0,y:0}});
 
-function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(W*.80,900)/700;ox=W/2-348.5*scale;oy=H/2-347.5*scale}
+function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(W*.80,900)/700;const offerEl=document.querySelector('.hero-offer');if(offerEl){const offerLeft=offerEl.getBoundingClientRect().left;if(offerLeft>W/2){const maxScale=Math.max(60,offerLeft-24-W/2)/345;if(maxScale<scale)scale=maxScale;}}ox=W/2-348.5*scale;oy=H/2-347.5*scale}
 
 addEventListener('resize',resize);resize();
 addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;pointer.active=true});
