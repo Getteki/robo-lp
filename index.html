@@ -472,7 +472,8 @@ function updateScroll(){
  canvas.style.visibility=progress>=1?'hidden':'visible';
  canvas.style.opacity=1-transitionEase((progress-.9)/.08);
 }
-addEventListener('scroll',updateScroll,{passive:true});
+let scrollUpdateScheduled=false;function scheduleUpdateScroll(){if(!scrollUpdateScheduled){scrollUpdateScheduled=true;requestAnimationFrame(()=>{scrollUpdateScheduled=false;updateScroll()})}}
+addEventListener('scroll',scheduleUpdateScroll,{passive:true});
 let ribbonResize;
 addEventListener('resize',()=>{updateScroll();clearTimeout(ribbonResize);ribbonResize=setTimeout(buildRibbons,120)});updateScroll();
 let vortexLastScroll=0,vortexSpeed=0;
