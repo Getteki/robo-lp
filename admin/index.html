@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>gerencIA — Leads</title>
+<style>
+  :root{
+    --paper:#faf9f5;
+    --ink:#29312c;
+    --muted:#465249;
+    --accent:#c95520;
+    --line:#dadfd6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  header{padding:24px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0}
+  header small{color:var(--muted)}
+  main{padding:20px;max-width:1100px;margin:0 auto}
+
+  #login-screen{max-width:360px;margin:80px auto;padding:28px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  #login-screen h2{margin-top:0;font-size:16px}
+  #login-screen input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;margin-bottom:12px}
+  #login-screen button{width:100%;padding:10px;border:none;border-radius:6px;background:var(--ink);color:#fff;font-weight:600;cursor:pointer}
+  #login-error{color:var(--accent);font-size:13px;min-height:18px}
+
+  #panel{display:none}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar select,.toolbar button{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:13px;cursor:pointer}
+  .toolbar .spacer{flex:1}
+  .toolbar #logout{color:var(--accent);border-color:var(--accent);background:transparent}
+
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;font-size:13px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0eee8;font-weight:600;color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  td.msg{max-width:260px;white-space:pre-wrap;color:var(--muted)}
+  .status-pill{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+  .status-novo{background:#e7eef0;color:#2c5a66}
+  .status-contatado{background:#fdeed9;color:#96591b}
+  .status-demo_enviada{background:#e6ebe1;color:#465249}
+  .status-convertido{background:#e3f2e6;color:#1f7a3a}
+  .status-descartado{background:#f2e3e3;color:#8a3030}
+  select.status-select{padding:6px 8px;border-radius:6px;border:1px solid var(--line);font-size:12px}
+  #empty,#loading{padding:40px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>gerencIA — Leads</h1>
+    <small>Solicitações de teste grátis</small>
+  </div>
+</header>
+
+<main>
+  <section id="login-screen">
+    <h2>Entrar</h2>
+    <input id="token-input" type="password" placeholder="Token de acesso" autocomplete="off">
+    <button id="login-btn" type="button">Entrar</button>
+    <p id="login-error"></p>
+  </section>
+
+  <section id="panel">
+    <div class="toolbar">
+      <select id="filter-status">
+        <option value="">Todos os status</option>
+        <option value="novo">Novo</option>
+        <option value="contatado">Contatado</option>
+        <option value="demo_enviada">Demo enviada</option>
+        <option value="convertido">Convertido</option>
+        <option value="descartado">Descartado</option>
+      </select>
+      <button id="refresh-btn" type="button">Atualizar</button>
+      <span class="spacer"></span>
+      <button id="logout" type="button">Sair</button>
+    </div>
+    <div id="loading" style="display:none">Carregando...</div>
+    <div id="empty" style="display:none">Nenhum lead ainda.</div>
+    <table id="leads-table" style="display:none">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Nome</th>
+          <th>Contato</th>
+          <th>Nicho</th>
+          <th>Mensagem</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="leads-body"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+const STATUS_LABELS = {
+  novo: "Novo",
+  contatado: "Contatado",
+  demo_enviada: "Demo enviada",
+  convertido: "Convertido",
+  descartado: "Descartado",
+};
+
+const loginScreen = document.getElementById("login-screen");
+const panel = document.getElementById("panel");
+const tokenInput = document.getElementById("token-input");
+const loginBtn = document.getElementById("login-btn");
+const loginError = document.getElementById("login-error");
+const refreshBtn = document.getElementById("refresh-btn");
+const logoutBtn = document.getElementById("logout");
+const filterStatus = document.getElementById("filter-status");
+const table = document.getElementById("leads-table");
+const tbody = document.getElementById("leads-body");
+const loadingEl = document.getElementById("loading");
+const emptyEl = document.getElementById("empty");
+
+function getToken() {
+  return localStorage.getItem("gerencia_admin_token") || "";
+}
+
+function setToken(token) {
+  localStorage.setItem("gerencia_admin_token", token);
+}
+
+function clearToken() {
+  localStorage.removeItem("gerencia_admin_token");
+}
+
+async function fetchLeads() {
+  loadingEl.style.display = "block";
+  table.style.display = "none";
+  emptyEl.style.display = "none";
+
+  const res = await fetch("/api/admin/leads", {
+    headers: { Authorization: "Bearer " + getToken() },
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    showLogin("Token inválido ou expirado.");
+    return;
+  }
+
+  const data = await res.json();
+  loadingEl.style.display = "none";
+  renderLeads(data.leads || []);
+}
+
+function renderLeads(leads) {
+  const filter = filterStatus.value;
+  const filtered = filter ? leads.filter((l) => l.status === filter) : leads;
+
+  if (filtered.length === 0) {
+    emptyEl.style.display = "block";
+    table.style.display = "none";
+    return;
+  }
+
+  tbody.innerHTML = "";
+  filtered.forEach((lead) => {
+    const tr = document.createElement("tr");
+
+    const dataCell = document.createElement("td");
+    dataCell.textContent = formatDate(lead.created_at);
+
+    const nomeCell = document.createElement("td");
+    nomeCell.textContent = lead.nome;
+
+    const contatoCell = document.createElement("td");
+    contatoCell.innerHTML = `${escapeHtml(lead.email)}${lead.whatsapp ? "<br>" + escapeHtml(lead.whatsapp) : ""}`;
+
+    const nichoCell = document.createElement("td");
+    nichoCell.textContent = lead.nicho || "—";
+
+    const msgCell = document.createElement("td");
+    msgCell.className = "msg";
+    msgCell.textContent = lead.mensagem || "—";
+
+    const statusCell = document.createElement("td");
+    const select = document.createElement("select");
+    select.className = "status-select";
+    Object.keys(STATUS_LABELS).forEach((key) => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = STATUS_LABELS[key];
+      if (key === lead.status) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener("change", () => updateStatus(lead.id, select.value));
+    statusCell.appendChild(select);
+
+    tr.append(dataCell, nomeCell, contatoCell, nichoCell, msgCell, statusCell);
+    tbody.appendChild(tr);
+  });
+
+  table.style.display = "table";
+}
+
+async function updateStatus(id, status) {
+  await fetch(`/api/admin/leads/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + getToken(),
+    },
+    body: JSON.stringify({ status }),
+  });
+}
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso.replace(" ", "T") + "Z");
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showLogin(message) {
+  loginScreen.style.display = "block";
+  panel.style.display = "none";
+  loginError.textContent = message || "";
+}
+
+function showPanel() {
+  loginScreen.style.display = "none";
+  panel.style.display = "block";
+  fetchLeads();
+}
+
+loginBtn.addEventListener("click", () => {
+  const token = tokenInput.value.trim();
+  if (!token) return;
+  setToken(token);
+  showPanel();
+});
+
+tokenInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") loginBtn.click();
+});
+
+refreshBtn.addEventListener("click", fetchLeads);
+filterStatus.addEventListener("change", fetchLeads);
+logoutBtn.addEventListener("click", () => {
+  clearToken();
+  showLogin("");
+});
+
+if (getToken()) {
+  showPanel();
+} else {
+  showLogin("");
+}
+</script>
+</body>
+</html>
