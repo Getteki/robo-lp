@@ -8,12 +8,12 @@ export async function onRequestPost({ request, env }) {
 
   const nome = clean(body.nome);
   const email = clean(body.email);
-  const whatsapp = clean(body.whatsapp) || null;
+  const whatsapp = clean(body.whatsapp);
   const nicho = clean(body.nicho) || null;
   const mensagem = clean(body.mensagem) || null;
 
-  if (!nome || !email) {
-    return json({ error: "Nome e email são obrigatórios" }, 400);
+  if (!nome || !email || !whatsapp) {
+    return json({ error: "Nome, email e WhatsApp são obrigatórios" }, 400);
   }
 
   await env.DB

@@ -652,10 +652,10 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');i
 <form id="trial-form" class="trial-modal-inner">
 <button type="button" class="trial-modal-close" aria-label="Fechar">×</button>
 <h2>Testar grátis por 7 dias</h2>
-<p class="trial-modal-sub">Preenche rapidinho e a gente entra em contato pra liberar seu acesso.</p>
+<p class="trial-modal-sub">Preenche rapidinho e a gente entra em contato pra liberar seu acesso, já com a plataforma configurada pra você.</p>
 <label>Nome<input type="text" id="trial-nome" required autocomplete="name"></label>
 <label>E-mail<input type="email" id="trial-email" required autocomplete="email"></label>
-<label>WhatsApp<input type="tel" id="trial-whatsapp" autocomplete="tel" placeholder="(11) 99999-9999"></label>
+<label>WhatsApp<input type="tel" id="trial-whatsapp" required autocomplete="tel" placeholder="(11) 99999-9999"></label>
 <label>Seu nicho<input type="text" id="trial-nicho" placeholder="Ex: clínica, imobiliária, consultoria"></label>
 <label>Conte rapidamente o que precisa (opcional)<textarea id="trial-mensagem" rows="3"></textarea></label>
 <button type="submit" class="trial-modal-submit">Quero testar grátis</button>
