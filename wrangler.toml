@@ -1,7 +1,0 @@
-name = "lpoficial"
-compatibility_date = "2026-09-20"
-pages_build_output_dir = "."
-
-[[send_email]]
-name = "SEND_EMAIL"
-destination_address = "jovanio.santanati@gmail.com"

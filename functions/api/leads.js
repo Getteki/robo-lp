@@ -1,5 +1,3 @@
-import { EmailMessage } from "cloudflare:email";
-
 export async function onRequestPost({ request, env }) {
   let body;
   try {
@@ -35,28 +33,33 @@ export async function onRequestPost({ request, env }) {
 }
 
 async function notifyByEmail(env, lead) {
-  if (!env.SEND_EMAIL) return;
+  if (!env.RESEND_API_KEY) return;
 
-  const raw = [
-    "From: gerencIA <notificacoes@usegerencia.com>",
-    "To: jovanio.santanati@gmail.com",
-    `Subject: Novo lead: ${lead.nome}`,
-    "Content-Type: text/plain; charset=utf-8",
-    "",
-    `Nome: ${lead.nome}`,
-    `Email: ${lead.email}`,
-    `WhatsApp: ${lead.whatsapp}`,
-    `Nicho: ${lead.nicho || "-"}`,
-    `Mensagem: ${lead.mensagem || "-"}`,
-  ].join("\r\n");
+  const html = `
+    <p><strong>Nome:</strong> ${lead.nome}</p>
+    <p><strong>Email:</strong> ${lead.email}</p>
+    <p><strong>WhatsApp:</strong> ${lead.whatsapp}</p>
+    <p><strong>Nicho:</strong> ${lead.nicho || "-"}</p>
+    <p><strong>Mensagem:</strong> ${lead.mensagem || "-"}</p>
+  `;
 
-  const message = new EmailMessage(
-    "notificacoes@usegerencia.com",
-    "jovanio.santanati@gmail.com",
-    raw
-  );
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "gerencIA <onboarding@resend.dev>",
+      to: "jovanio.santanati@gmail.com",
+      subject: `Novo lead: ${lead.nome}`,
+      html,
+    }),
+  });
 
-  await env.SEND_EMAIL.send(message);
+  if (!res.ok) {
+    throw new Error(`Resend respondeu ${res.status}: ${await res.text()}`);
+  }
 }
 
 function clean(value) {
