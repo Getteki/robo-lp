@@ -1,3 +1,5 @@
+import { EmailMessage } from "cloudflare:email";
+
 export async function onRequestPost({ request, env }) {
   let body;
   try {
@@ -23,7 +25,38 @@ export async function onRequestPost({ request, env }) {
     .bind(nome, email, whatsapp, nicho, mensagem)
     .run();
 
+  try {
+    await notifyByEmail(env, { nome, email, whatsapp, nicho, mensagem });
+  } catch (err) {
+    console.error("Falha ao enviar notificação por e-mail", err);
+  }
+
   return json({ ok: true }, 201);
+}
+
+async function notifyByEmail(env, lead) {
+  if (!env.SEND_EMAIL) return;
+
+  const raw = [
+    "From: gerencIA <notificacoes@usegerencia.com>",
+    "To: jovanio.santanati@gmail.com",
+    `Subject: Novo lead: ${lead.nome}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "",
+    `Nome: ${lead.nome}`,
+    `Email: ${lead.email}`,
+    `WhatsApp: ${lead.whatsapp}`,
+    `Nicho: ${lead.nicho || "-"}`,
+    `Mensagem: ${lead.mensagem || "-"}`,
+  ].join("\r\n");
+
+  const message = new EmailMessage(
+    "notificacoes@usegerencia.com",
+    "jovanio.santanati@gmail.com",
+    raw
+  );
+
+  await env.SEND_EMAIL.send(message);
 }
 
 function clean(value) {
