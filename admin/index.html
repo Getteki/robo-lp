@@ -44,6 +44,8 @@
   .status-convertido{background:#e3f2e6;color:#1f7a3a}
   .status-descartado{background:#f2e3e3;color:#8a3030}
   select.status-select{padding:6px 8px;border-radius:6px;border:1px solid var(--line);font-size:12px}
+  .delete-btn{padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--accent);font-size:12px;cursor:pointer}
+  .delete-btn:hover{background:#f2e3e3;border-color:var(--accent)}
   #empty,#loading{padding:40px;text-align:center;color:var(--muted)}
 </style>
 </head>
@@ -89,6 +91,7 @@
           <th>Nicho</th>
           <th>Mensagem</th>
           <th>Status</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="leads-body"></tbody>
@@ -193,7 +196,15 @@ function renderLeads(leads) {
     select.addEventListener("change", () => updateStatus(lead.id, select.value));
     statusCell.appendChild(select);
 
-    tr.append(dataCell, nomeCell, contatoCell, nichoCell, msgCell, statusCell);
+    const actionsCell = document.createElement("td");
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.textContent = "Excluir";
+    deleteBtn.addEventListener("click", () => deleteLead(lead.id, lead.nome));
+    actionsCell.appendChild(deleteBtn);
+
+    tr.append(dataCell, nomeCell, contatoCell, nichoCell, msgCell, statusCell, actionsCell);
     tbody.appendChild(tr);
   });
 
@@ -209,6 +220,17 @@ async function updateStatus(id, status) {
     },
     body: JSON.stringify({ status }),
   });
+}
+
+async function deleteLead(id, nome) {
+  if (!confirm(`Excluir o lead "${nome}"? Essa ação não pode ser desfeita.`)) return;
+
+  await fetch(`/api/admin/leads/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + getToken() },
+  });
+
+  fetchLeads();
 }
 
 function formatDate(iso) {
