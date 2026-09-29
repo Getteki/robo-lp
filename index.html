@@ -661,8 +661,6 @@ addEventListener('scroll',scheduleHub,{passive:true});addEventListener('resize',
 
 
 </script><script>
-// TODO: substituir pela URL real do checkout/trial.
-const CHECKOUT_URL = 'https://mpago.la/2B1smzQ';
 const DESTINATIONS = {contact:'mailto:Contato.gerencia@gmail.com',implementation:'#contato',academy:'#contato',sign:'#contato',integrations:'#contato',instagram:'https://www.instagram.com/gerenc.ia_/',terms:'termos-de-uso.html',privacy:'politica-de-privacidade.html',cancellation:'termos-de-uso.html#cancelamento'};
 document.querySelectorAll('[data-destination]').forEach(a=>a.href=DESTINATIONS[a.dataset.destination]);
 document.querySelectorAll('.mobile-nav a').forEach(a=>a.addEventListener('click',()=>a.closest('details').open=false));
@@ -683,7 +681,6 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');i
 <div id="trial-modal-success" class="trial-modal-success" hidden>
 <h2>Recebemos seu pedido!</h2>
 <p>Em breve alguém do time entra em contato pelo e-mail ou WhatsApp que você informou pra liberar seu teste.</p>
-<a id="trial-modal-checkout-link" href="#" class="commercial-button">Já quero ir pro pagamento ↗</a>
 <button type="button" class="trial-modal-close-success">Fechar</button>
 </div>
 </dialog>
@@ -693,7 +690,6 @@ const modal=document.getElementById('trial-modal');
 const form=document.getElementById('trial-form');
 const success=document.getElementById('trial-modal-success');
 const errorEl=document.getElementById('trial-modal-error');
-const checkoutLink=document.getElementById('trial-modal-checkout-link');
 const submitBtn=form.querySelector('.trial-modal-submit');
 
 function openModal(){
@@ -720,7 +716,6 @@ form.addEventListener('submit',async e=>{
  try{
   const res=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
   if(!res.ok)throw new Error('request-failed');
-  checkoutLink.href=CHECKOUT_URL;
   form.hidden=true;
   success.hidden=false;
  }catch(err){
