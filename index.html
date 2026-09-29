@@ -355,7 +355,7 @@ const definitions=[
 ];
 const pieces=definitions.map(p=>{const path=new Path2D();p.points.forEach(([x,y],i)=>i?path.lineTo(x,y):path.moveTo(x,y));path.closePath();return {...p,path,x:0,y:0}});
 
-function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(W*.64,H*.56,560)/700;ox=W/2-348.5*scale;oy=H/2-347.5*scale}
+function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);const width=Math.round(W*dpr),height=Math.round(H*dpr);if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(W*.64,H*.56,560)/700;ox=W/2-348.5*scale;oy=H/2-347.5*scale}
 
 addEventListener('resize',resize);resize();
 addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;pointer.active=true});
@@ -440,21 +440,41 @@ for(let y=170;y<520;y+=tile)for(let x=170;x<530;x+=tile){
 }
 const pageRibbons=document.createElement('div');
 pageRibbons.setAttribute('aria-hidden','true');pageRibbons.inert=true;
-pageRibbons.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden;';
+pageRibbons.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden;visibility:hidden;';
 document.body.appendChild(pageRibbons);
-let ribbons=[];
+let ribbons=[],ribbonWidth=0,ribbonTotal=0;
+function releaseRibbons(){
+ if(!ribbons.length)return;
+ pageRibbons.replaceChildren();ribbons=[];ribbonWidth=0;ribbonTotal=0;
+}
 function buildRibbons(){
- pageRibbons.replaceChildren();ribbons=[];
  const count=36,total=Math.min(nextSection.offsetHeight,H*1.4),band=total/count;
- for(let i=0;i<count;i++){
-  const strip=document.createElement('div');
-  strip.style.cssText=`position:absolute;left:0;top:0;width:${W}px;height:${band+.6}px;overflow:hidden;transform-origin:50% 50%;will-change:transform;`;
-  const copy=nextSection.cloneNode(true);
-  copy.removeAttribute('id');copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
-  copy.style.cssText=`position:absolute;left:0;top:${-i*band}px;width:${W}px;max-width:none;opacity:1;visibility:visible;transform:none;filter:none;clip-path:none;margin:0;`;
-  strip.appendChild(copy);pageRibbons.appendChild(strip);ribbons.push({el:strip,y:i*band,height:band});
+ if(ribbons.length&&ribbonWidth===W&&ribbonTotal===total)return;
+ // Keep the original 36-band effect, but allocate it only while visible.
+ // Descendant will-change/backface hints otherwise promote hundreds of
+ // full-section layers, even though each strip shows only a narrow band.
+ if(!ribbons.length){
+  const batch=document.createDocumentFragment();
+  for(let i=0;i<count;i++){
+   const strip=document.createElement('div');
+   strip.style.cssText='position:absolute;left:0;top:0;overflow:hidden;contain:strict;transform-origin:50% 50%;will-change:transform;';
+   const copy=nextSection.cloneNode(true);
+   copy.removeAttribute('id');copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+   copy.style.cssText='position:absolute;left:0;max-width:none;opacity:1;visibility:visible;transform:none;filter:none;clip-path:none;margin:0;';
+   for(const el of [copy,...copy.querySelectorAll('*')]){
+    el.style.setProperty('will-change','auto','important');
+    el.style.setProperty('backface-visibility','visible','important');
+   }
+   strip.appendChild(copy);batch.appendChild(strip);ribbons.push({el:strip,copy,y:0,height:0});
+  }
+  pageRibbons.appendChild(batch);
  }
- updateScroll();
+ ribbons.forEach((r,i)=>{
+  r.y=i*band;r.height=band;
+  r.el.style.width=`${W}px`;r.el.style.height=`${band+.6}px`;
+  r.copy.style.top=`${-i*band}px`;r.copy.style.width=`${W}px`;
+ });
+ ribbonWidth=W;ribbonTotal=total;
 }
 function updateScroll(){
  const navHeight=document.querySelector('.lp-nav').offsetHeight;
@@ -468,7 +488,9 @@ function updateScroll(){
  nextSection.style.cssText='opacity:1;transform:none;filter:none;clip-path:none;';
  nextSection.style.visibility=progress>=.97||reduced?'visible':'hidden';
  nextSection.querySelectorAll('.lead-route,.route-track button,:scope > .eyebrow,:scope > h2,:scope > p').forEach(el=>{el.style.transform='none';el.style.opacity=1});
- pageRibbons.style.visibility=!reduced&&progress>.38&&progress<.97?'visible':'hidden';
+ const ribbonsVisible=!reduced&&progress>.38&&progress<.97;
+ if(ribbonsVisible)buildRibbons();else releaseRibbons();
+ pageRibbons.style.visibility=ribbonsVisible?'visible':'hidden';
  const q=clamp((progress-.06)/.94);
  const tip=H*.5+H*.36*smooth(q/.74);
  ribbons.forEach((r,i)=>{
@@ -490,8 +512,7 @@ function updateScroll(){
 }
 let scrollUpdateScheduled=false;function scheduleUpdateScroll(){if(!scrollUpdateScheduled){scrollUpdateScheduled=true;requestAnimationFrame(()=>{scrollUpdateScheduled=false;updateScroll()})}}
 addEventListener('scroll',scheduleUpdateScroll,{passive:true});
-let ribbonResize;
-addEventListener('resize',()=>{updateScroll();clearTimeout(ribbonResize);ribbonResize=setTimeout(buildRibbons,120)});updateScroll();
+addEventListener('resize',scheduleUpdateScroll);updateScroll();
 let vortexLastScroll=0,vortexSpeed=0;
 function drawVortex(){
  const q=clamp((progress-.06)/.94),form=smooth(q/.32),arrival=smooth((q-.69)/.31);
@@ -587,8 +608,7 @@ setInterval(()=>{
  route.style.setProperty('--step-progress',String(clamp(1-(routeDue-now)/3600)));
 },100);
 showRoute();pauseRouteLabel();
-buildRibbons();
-document.fonts.ready.then(buildRibbons);
+document.fonts.ready.then(scheduleUpdateScroll);
 
 const hubSection=document.querySelector('.hub-section'),hubOrbit=document.querySelector('.hub-orbit');
 const hubApps=[...document.querySelectorAll('.hub-app')],hubWires=document.querySelector('.hub-wires');
